@@ -22,41 +22,45 @@ namespace TransitFunctionApp
             EventHubTrigger("purchaseticketeventhub", 
             Connection = "receiverConnectionString")
             ]
-        EventData[] eventHubMessages, ILogger log)
+            EventData[] eventHubMessages, ILogger log)
         {
+            serviceClient = ServiceClient.CreateFromConnectionString(Environment.GetEnvironmentVariable("IotHubConnectionString"));
+
             // process messages
             foreach (EventData message in eventHubMessages)
             {
                 string messagePayload = Encoding.UTF8.GetString(message.Body.Array);
-
+                
+                PurchaseTicketAction action = new PurchaseTicketAction(new ServiceClientInvokeDeviceMethod(serviceClient), messagePayload, log);
+                action.Run();
                 // process each message
-                PurchaseTicketRequest ticketRequestMessage = JsonConvert.DeserializeObject<PurchaseTicketRequest>(messagePayload);
+                //PurchaseTicketRequest ticketRequestMessage = JsonConvert.DeserializeObject<PurchaseTicketRequest>(messagePayload);
 
-                try
-                {
-                    string methodName = ticketRequestMessage.MethodName;
-                    //string iotHubName = Environment.GetEnvironmentVariable("IotHubName");
-                    string deviceId = ticketRequestMessage.DeviceId;
-                    //string responseUrl = $"https://{iotHubName}.azure-devices.net/twins/{deviceId}/methods?api-version=2018-06-30";
-                    string transactionId = ticketRequestMessage.TransactionId;
-                    var payload = new PurchaseTicketPayload()
-                    {
-                        TransactionId = transactionId,
-                        IsApproved = true,
-                        DeviceId = ticketRequestMessage.DeviceId,
-                        DeviceType = ticketRequestMessage.DeviceType,
-                        MessageType = ticketRequestMessage.MessageType,
-                    };
+                //try
+                //{
+                //    string methodName = ticketRequestMessage.MethodName;
+                //    //string iotHubName = Environment.GetEnvironmentVariable("IotHubName");
+                //    string deviceId = ticketRequestMessage.DeviceId;
+                //    //string responseUrl = $"https://{iotHubName}.azure-devices.net/twins/{deviceId}/methods?api-version=2018-06-30";
+                //    string transactionId = ticketRequestMessage.TransactionId;
+                //    var payload = new PurchaseTicketPayload()
+                //    {
+                //        TransactionId = transactionId,
+                //        IsApproved = true,
+                //        DeviceId = ticketRequestMessage.DeviceId,
+                //        DeviceType = ticketRequestMessage.DeviceType,
+                //        MessageType = ticketRequestMessage.MessageType,
+                //    };
 
-                    log.LogInformation($"Response Method: {methodName}");
+                //    log.LogInformation($"Response Method: {methodName}");
 
-                    serviceClient = ServiceClient.CreateFromConnectionString(Environment.GetEnvironmentVariable("IotHubConnectionString"));
-                    InvokeMethod(methodName, payload).GetAwaiter().GetResult();
-                }
-                catch(Exception ex)
-                {
-                    log.LogError(ex.Message);
-                }
+                //    serviceClient = ServiceClient.CreateFromConnectionString(Environment.GetEnvironmentVariable("IotHubConnectionString"));
+                //    InvokeMethod(methodName, payload).GetAwaiter().GetResult();
+                //}
+                //catch(Exception ex)
+                //{
+                //    log.LogError(ex.Message);
+                //}
                 
             }
         }
